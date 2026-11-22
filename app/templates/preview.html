@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spieler-Bauchbinden — Preview</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Bug preview</h1>
+  <nav>
+    <a href="{{ url_for('control') }}">Control</a>
+    <a href="{{ url_for('export_zip') }}">Export all as ZIP</a>
+  </nav>
+</header>
+
+<main>
+  {% if players %}
+  <div class="row">
+    <label>Player
+      <select id="player">
+        {% for p in players %}
+        <option value="{{ p.id }}">{{ p.number ~ " " if p.number }}{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Backdrop
+      <select id="backdrop">
+        <option value="green">Chroma green (keying test)</option>
+        <option value="dark">Dark arena</option>
+        <option value="white">White</option>
+      </select>
+    </label>
+    <span class="muted">{{ settings.width }}×{{ settings.height }} px</span>
+    <a id="download" href="/banner.png?player_id={{ players[0].id }}">Download PNG ↓</a>
+  </div>
+
+  <div id="frame" class="frame green">
+    <img id="bug" src="/banner.png?player_id={{ players[0].id }}" alt="banner preview">
+  </div>
+  <p class="muted">The frame shows the broadcast canvas at
+    {{ settings.width }}×{{ settings.height }}; the banner is transparent outside
+    the bug, exactly as exported.</p>
+  {% else %}
+  <p>No players defined. <a href="{{ url_for('control') }}">Add players first</a>.</p>
+  {% endif %}
+</main>
+
+<script>
+const playerSel = document.getElementById("player");
+if (playerSel) {
+  const bug = document.getElementById("bug");
+  const dl = document.getElementById("download");
+  const refresh = () => {
+    const src = "/banner.png?player_id=" + playerSel.value;
+    bug.src = src;
+    dl.href = src;
+  };
+  playerSel.addEventListener("change", refresh);
+  document.getElementById("backdrop").addEventListener("change", (e) => {
+    const frame = document.getElementById("frame");
+    frame.className = "frame " + e.target.value;
+  });
+}
+</script>
+</body>
+</html>

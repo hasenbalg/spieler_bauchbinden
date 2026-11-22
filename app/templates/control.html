@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spieler-Bauchbinden — Control</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Spieler-Bauchbinden</h1>
+  <nav>
+    <a href="{{ url_for('preview') }}">Preview</a>
+    <a href="{{ url_for('export_zip') }}">Export all as ZIP</a>
+  </nav>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Broadcast settings</h2>
+    <form method="post" action="{{ url_for('save_settings') }}"
+          enctype="multipart/form-data">
+      <input type="hidden" name="_form" value="1">
+      <label>Logo (PNG with transparency)
+        <input type="file" name="logo" accept="image/png,image/*">
+        {% if settings.has_logo %}<span class="ok">stored in DB ✓</span>{% endif %}
+      </label>
+      <div class="row">
+        <label>Width (px)
+          <input type="number" name="width" min="64" max="7680"
+                 placeholder="{{ settings.width }}">
+        </label>
+        <label>Height (px)
+          <input type="number" name="height" min="64" max="7680"
+                 placeholder="{{ settings.height }}">
+        </label>
+        <label>Resolution presets
+          <select onchange="document.getElementsByName('width')[0].value=this.value.split('x')[0];document.getElementsByName('height')[0].value=this.value.split('x')[1];">
+            <option value="">— choose —</option>
+            <option value="1280x720">HD 1280×720</option>
+            <option value="1920x1080">Full HD 1920×1080</option>
+            <option value="2560x1440">QHD 2560×1440</option>
+            <option value="3840x2160">UHD 4K 3840×2160</option>
+          </select>
+        </label>
+      </div>
+      <p class="muted">Current output: {{ settings.width }}×{{ settings.height }} px</p>
+      <div class="row">
+        <label>Accent color
+          <input type="color" name="accent" value="{{ settings.accent }}">
+        </label>
+        <label>Bar color
+          <input type="color" name="bar_color" value="{{ settings.bar_color }}">
+        </label>
+      </div>
+      <button type="submit">Save settings</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Add player</h2>
+    <form method="post" action="{{ url_for('add_player') }}"
+          enctype="multipart/form-data">
+      <input type="hidden" name="_form" value="1">
+      <div class="row">
+        <label>Name <input type="text" name="name" required></label>
+        <label>Number <input type="text" name="number" size="3"></label>
+        <label>Photo (PNG with transparency, optional)
+          <input type="file" name="photo" accept="image/png,image/*">
+        </label>
+      </div>
+      <button type="submit">Add player</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Roster ({{ players|length }})</h2>
+    {% if players %}
+    <table>
+      <tr><th></th><th>Name</th><th>#</th><th>Banner</th><th></th></tr>
+      {% for p in players %}
+      <tr>
+        <td class="thumb">
+          {% if p.photo %}<img src="{{ url_for('media_photo', player_id=p.id) }}" alt="">{% endif %}
+        </td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.number or "" }}</td>
+        <td><a href="{{ url_for('banner_png', player_id=p.id) }}">PNG ↓</a></td>
+        <td>
+          <form method="post" action="{{ url_for('delete_player', player_id=p.id) }}"
+                onsubmit="return confirm('Delete {{ p.name }}?')">
+            <input type="hidden" name="_form" value="1">
+            <button class="danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="muted">No players yet — add the first one above.</p>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>
