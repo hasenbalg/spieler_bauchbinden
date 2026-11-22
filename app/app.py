@@ -43,8 +43,11 @@ def _read_upload(name):
         return None
     data = f.read()
     if len(data) > MAX_UPLOAD_BYTES:
-        return None
-    return _image_or_none(data)
+        abort(400, f"{name}: file too large (max 8 MB)")
+    if _image_or_none(data) is None:
+        abort(400, f"{name}: not a readable image — upload PNG/JPEG "
+                   f"(SVG must be exported to PNG first)")
+    return data
 
 
 def _settings_dict():

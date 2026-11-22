@@ -115,6 +115,15 @@ def test_settings_rejects_bad_resolution(client):
     assert client.post("/settings", data={"width": "10"}).status_code == 400
 
 
+def test_unreadable_upload_is_rejected_not_dropped(client):
+    r = client.post("/settings",
+                    data={"logo": (io.BytesIO(b"<svg><circle/></svg>"),
+                                   "logo.svg", "image/svg")},
+                    content_type="multipart/form-data")
+    assert r.status_code == 400
+    assert client.get("/media/logo").status_code == 404
+
+
 def test_export_zip_contains_all_players(client):
     add_player(client, name="Ada")
     add_player(client, name="Bert")
