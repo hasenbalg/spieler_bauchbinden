@@ -144,6 +144,19 @@ def test_preview_page_lists_players(client):
     assert b"Hans Wurst" in resp.data
 
 
+def test_vendored_fonts_are_real_ttf_files(client):
+    """The vendored fonts must parse on their own — no silent fallback to
+    same-named system fonts (ImageFont.truetype(path) would fall back and
+    hide corrupt blobs in CI/dev, breaking slim Docker images)."""
+    import banner as banner_mod
+    from PIL import ImageFont
+    for path in (banner_mod.BOLD_FONT, banner_mod.REG_FONT):
+        blob = open(path, "rb").read()
+        assert blob[:4] in (b"\x00\x01\x00\x00", b"OTTO", b"true", b"ttcf"), path
+        ImageFont.truetype(io.BytesIO(blob), 20)  # BytesIO: raises if invalid
+        assert b"<!DOCTYPE" not in blob[:2048], f"{path} looks like a web page"
+
+
 def test_delete_player(client):
     add_player(client)
     assert client.post("/players/1/delete").status_code == 204

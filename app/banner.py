@@ -23,7 +23,13 @@ BAR_ALPHA = 232
 
 
 def _font(path, size):
-    return ImageFont.truetype(path, max(8, int(size)))
+    # Load through BytesIO on purpose: ImageFont.truetype(path) silently
+    # falls back to same-named SYSTEM fonts when the file is unreadable,
+    # which hides corrupt/vendored-font bugs in environments that happen
+    # to ship a DejaVu (Docker slim images do not — CI would pass and
+    # production would crash with "unknown file format").
+    with open(path, "rb") as fh:
+        return ImageFont.truetype(io.BytesIO(fh.read()), max(8, int(size)))
 
 
 def _hex_rgb(value, default_rgb):
