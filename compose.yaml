@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    container_name: bauchbinden_web
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+psycopg://bauch:***@db:5432/bauchbinden
+    depends_on:
+      - db
+    expose:
+      - "5000"
+
+  db:
+    image: postgres:17-alpine
+    container_name: bauchbinden_db
+    restart: always
+    environment:
+      - POSTGRES_USER=bauch
+      - POSTGRES_PASSWORD=***
+      - POSTGRES_DB=bauchbinden
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: bauchbinden_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    depends_on:
+      - web
