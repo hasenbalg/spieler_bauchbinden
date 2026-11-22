@@ -22,6 +22,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "postgresql+psycopg://bauch:bauch@db:5432/bauchbinden")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app)
 
 
 def _image_or_none(data):
