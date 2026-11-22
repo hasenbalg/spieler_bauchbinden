@@ -23,7 +23,9 @@ DEFAULT_ACCENT = "#E4392B"
 DEFAULT_BAR = "#0C101C"
 TEXT_COLOR = "#FFFFFF"
 BAR_ALPHA = 232
-TEXTURE_ALPHA = 0.07  # handballsociety.com overlays the texture at 7%
+TEXTURE_ALPHA = 0.18  # site uses 0.07 on huge hero areas; on a small bug
+# that is invisible against #0C101C, so we push it into a visible range
+TEXTURE_TILE = 4.5    # tile side in bar-height units -> readable arc cells
 
 # The site's .golden-gradient, verbatim: linear-gradient(227deg, ...).
 GOLD_STOPS = [
@@ -189,6 +191,7 @@ def render_banner(name, number=None, logo_png=None, photo_png=None,
     text_w = round(probe.textlength(name_text, font=name_font)) if name_text else 0
     bar_w = pad + logo_w + (chip_w + pad if chip_w else 0) + text_w + pad
     frame_w = max(2, round(bar_h * 0.06))  # golden gradient frame thickness
+    chip_pad = max(2, round(bar_h * 0.12))  # breathing room around number chip
     bar_w += 2 * frame_w
     photo_gap = round(bar_h * 0.12)
 
@@ -211,7 +214,7 @@ def render_banner(name, number=None, logo_png=None, photo_png=None,
     inner_w = bar_w - 2 * frame_w
     inner_h = bar_h - 2 * frame_w
     inner = Image.new("RGBA", (inner_w, inner_h), (*bar_rgb, BAR_ALPHA))
-    inner.alpha_composite(_texture_layer(inner_w, inner_h, bar_h * 2.4))
+    inner.alpha_composite(_texture_layer(inner_w, inner_h, bar_h * TEXTURE_TILE))
     bar.alpha_composite(inner, dest=(frame_w, frame_w))
     canvas.alpha_composite(bar, dest=(bar_x, bar_y))
 
@@ -223,16 +226,17 @@ def render_banner(name, number=None, logo_png=None, photo_png=None,
         cursor += logo_w + pad
 
     if chip_w:
+        box_w = chip_w - 2 * chip_pad
+        box_h = bar_h - 2 * frame_w - 2 * chip_pad
         chip = Image.new("RGBA", (chip_w, bar_h - 2 * frame_w), (0, 0, 0, 0))
         chip_draw = ImageDraw.Draw(chip)
-        chip_draw.rectangle([0, 0, chip_w - 1, bar_h - 2 * frame_w - 1],
-                            fill=(*accent_rgb, 255))
-        num_font = _font(BOLD_FONT, bar_h * 0.55)
+        chip_draw.rectangle([chip_pad, chip_pad, chip_pad + box_w - 1,
+                             chip_pad + box_h - 1], fill=(*accent_rgb, 255))
+        num_font = _font(BOLD_FONT, bar_h * 0.50)
         num_text = str(number)
         bb = chip_draw.textbbox((0, 0), num_text, font=num_font)
-        chip_h = bar_h - 2 * frame_w
-        chip_draw.text(((chip_w - (bb[2] - bb[0])) / 2 - bb[0],
-                        (chip_h - (bb[3] - bb[1])) / 2 - bb[1]),
+        chip_draw.text((chip_pad + (box_w - (bb[2] - bb[0])) / 2 - bb[0],
+                        chip_pad + (box_h - (bb[3] - bb[1])) / 2 - bb[1]),
                        num_text, font=num_font, fill=TEXT_COLOR)
         canvas.alpha_composite(chip, dest=(cursor, bar_y + frame_w))
         cursor += chip_w + pad
